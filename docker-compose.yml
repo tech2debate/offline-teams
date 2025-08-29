@@ -1,0 +1,67 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    container_name: nextcloud-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: ncuser
+      POSTGRES_PASSWORD: ncpass
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - office_net
+
+  redis:
+    image: redis:7
+    container_name: nextcloud-redis
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "redispass"]
+    networks:
+      - office_net
+
+  nextcloud:
+    image: nextcloud:31.0.8-apache
+    container_name: nextcloud-app
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: ncuser
+      POSTGRES_PASSWORD: ncpass
+      POSTGRES_HOST: db
+      REDIS_HOST: redis
+      REDIS_HOST_PASSWORD: redispass
+    volumes:
+      - nextcloud_data:/var/www/html
+    depends_on:
+      - db
+      - redis
+    networks:
+      - office_net
+
+  onlyoffice:
+    image: onlyoffice/documentserver:9.0
+    container_name: onlyoffice
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    environment:
+      - JWT_ENABLED=true
+      - JWT_SECRET=onlyofficejwt
+    volumes:
+      - onlyoffice_data:/var/www/onlyoffice/Data
+    networks:
+      - office_net
+
+volumes:
+  db_data:
+  nextcloud_data:
+  onlyoffice_data:
+
+networks:
+  office_net:
+    driver: bridge
