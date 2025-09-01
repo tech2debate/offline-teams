@@ -1,0 +1,52 @@
+admin
+Admin@1234
+
+| Field             | Value                  |
+| ----------------- | ---------------------- |
+| Database type     | **PostgreSQL**         |
+| Database user     | `ncuser`               |
+| Database password | `ncpass`               |
+| Database name     | `nextcloud`            |
+| Database host     | `db` (not `localhost`) |
+
+
+
+chown -R www-data:www-data /var/www/html/config
+/var/www/html/config/config.php
+'trusted_domains' =>
+array (
+  0 => 'localhost',
+  1 => '192.168.0.8',     // LAN IP of your server
+  2 => 'lap221-avinash-dev',   // Optional: hostname
+  3 => 'nextcloud'
+),
+
+
+only creds
+
+http://192.168.0.8:8081/
+onlyofficejwt
+
+http://192.168.0.8:8081/
+http://192.168.0.8:8080/
+
+
+
+
+
+From your browser:
+Nextcloud → http://localhost:8081
+ONLYOFFICE → http://localhost:8080
+
+From inside containers (important!):
+Nextcloud reaches ONLYOFFICE at → http://onlyoffice
+ONLYOFFICE reaches Nextcloud at → http://nextcloud
+
+
+winget install Nextcloud.Talk
+chmod -R u+w /var/www/onlyoffice/documentserver-example
+
+
+
+
+
