@@ -1,0 +1,87 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    container_name: nextcloud-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: ncuser
+      POSTGRES_PASSWORD: ncpass
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - office_net
+
+  redis:
+    image: redis:7
+    container_name: nextcloud-redis
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "redispass"]
+    networks:
+      - office_net
+
+  nextcloud:
+    image: nextcloud:31.0.8-apache
+    container_name: nextcloud-app
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: ncuser
+      POSTGRES_PASSWORD: ncpass
+      POSTGRES_HOST: db
+      REDIS_HOST: redis
+      REDIS_HOST_PASSWORD: redispass
+    volumes:
+      - nextcloud_data:/var/www/html
+    depends_on:
+      - db
+      - redis
+    networks:
+      - office_net
+      - proxy_net
+    expose:
+      - "80"
+
+  onlyoffice:
+    image: onlyoffice/documentserver:9.0
+    container_name: onlyoffice
+    restart: unless-stopped
+    environment:
+      - JWT_ENABLED=true
+      - JWT_SECRET=onlyofficejwt
+    volumes:
+      - onlyoffice_data:/var/www/onlyoffice/Data
+    networks:
+      - office_net
+      - proxy_net
+    expose:
+      - "80"
+
+  nginx-proxy-manager:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: nginx-proxy-manager
+    restart: unless-stopped
+    ports:
+      - "80:80"     # HTTP
+      - "443:443"   # HTTPS
+      - "81:81"     # NPM Admin UI
+    volumes:
+      - npm_data:/data
+      - npm_letsencrypt:/etc/letsencrypt
+    networks:
+      - proxy_net
+
+volumes:
+  db_data:
+  nextcloud_data:
+  onlyoffice_data:
+  npm_data:
+  npm_letsencrypt:
+
+networks:
+  office_net:
+    driver: bridge
+  proxy_net:
+    driver: bridge
